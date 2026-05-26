@@ -1,0 +1,11 @@
+# requirements.txt — Dependencias del proyecto PulmoCheck
+# Instalar localmente con: pip install -r requirements.txt
+
+flask==3.0.0
+flask-cors==4.0.0
+scikit-learn==1.4.0
+numpy==1.26.4
+pandas==2.2.0
+
+# Servidor de producción (requerido por Render)
+gunicorn==21.2.0
