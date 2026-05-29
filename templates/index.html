@@ -1307,33 +1307,40 @@
       };
 
       _lastRecomend.forEach((rec) => {
-        checkPage(28);
         const u = urgMap[rec.urgencia];
+
+        // Calcular líneas de descripción ANTES de dibujar el cuadro
+        setFont('normal', 8); colorText(C_MUTED);
+        const descLines  = doc.splitTextToSize(rec.desc, CONTENT - 12);
+        const lineH      = 4.5;
+        // Altura dinámica: badge(6) + título(7) + descripción + padding(6)
+        const cardHeight = 6 + 7 + (descLines.length * lineH) + 6;
+
+        checkPage(cardHeight + 4);
 
         // Fondo de la tarjeta
         colorFill([248, 250, 252]);
         colorDraw(C_BORDER);
         doc.setLineWidth(0.3);
-        doc.roundedRect(MARGIN, y, CONTENT, 22, 2, 2, 'FD');
+        doc.roundedRect(MARGIN, y, CONTENT, cardHeight, 2, 2, 'FD');
 
-        // Barra lateral de color
+        // Barra lateral de color (altura dinámica)
         colorFill(u.rgb);
-        doc.roundedRect(MARGIN, y, 3, 22, 1, 1, 'F');
+        doc.roundedRect(MARGIN, y, 3, cardHeight, 1, 1, 'F');
 
-        // Badge urgencia
+        // Badge urgencia (sin emojis)
         setFont('bold', 7); colorText(u.rgb);
         doc.text(u.label, MARGIN + 6, y + 5);
 
-        // Título
+        // Título (sin emoji — jsPDF no soporta emojis)
         setFont('bold', 9); colorText(C_PRIMARY);
-        doc.text(`${rec.icon}  ${rec.titulo}`, MARGIN + 6, y + 11);
+        doc.text(rec.titulo, MARGIN + 6, y + 12);
 
-        // Descripción (con salto de línea automático)
+        // Descripción multilínea
         setFont('normal', 8); colorText(C_MUTED);
-        const lines = doc.splitTextToSize(rec.desc, CONTENT - 10);
-        doc.text(lines, MARGIN + 6, y + 17);
+        doc.text(descLines, MARGIN + 6, y + 19);
 
-        y += 26;
+        y += cardHeight + 4;
       });
 
       y += 4;
