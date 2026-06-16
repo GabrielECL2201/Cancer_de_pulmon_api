@@ -5,41 +5,36 @@ usando el modelo Random Forest entrenado.
 
 Autor: Grupo - Curso de Programación (6to ciclo - Ing. de Sistemas)
 
-Encodings del dataset:
-  AGE                    : numérico entero
-  GENDER                 : Masculino=0, Femenino=1
-  SMOKING                : No=0, Sí=1
-  FINGER_DISCOLORATION   : No=0, Sí=1
-  MENTAL_STRESS          : No=0, Sí=1
-  EXPOSURE_TO_POLLUTION  : No=0, Sí=1
-  LONG_TERM_ILLNESS      : No=0, Sí=1
-  IMMUNE_WEAKNESS        : No=0, Sí=1
-  BREATHING_ISSUE        : No=0, Sí=1
-  ALCOHOL_CONSUMPTION    : No=0, Sí=1
-  THROAT_DISCOMFORT      : No=0, Sí=1
-  CHEST_TIGHTNESS        : No=0, Sí=1
-  FAMILY_HISTORY         : No=0, Sí=1
-  SMOKING_FAMILY_HISTORY : No=0, Sí=1
-  STRESS_IMMUNE          : No=0, Sí=1
-  ENERGY_LEVEL           : decimal (23.26 – 83.05)
-  OXYGEN_SATURATION      : decimal (89.92 – 99.80)
-  PULMONARY_DISEASE (y)  : No=0, Sí=1
-
 Endpoints:
-  GET  /          → Sirve el formulario HTML
-  POST /predict   → Recibe JSON, retorna predicción
-  GET  /health    → Estado de la API
+  GET  /              → Sirve el formulario HTML
+  POST /predict       → Recibe JSON, retorna predicción
+  POST /send-report   → Recibe PDF en base64 y lo envía por correo
+  GET  /health        → Estado de la API
 """
 
 import pickle
 import os
+import base64
 import numpy as np
 from flask import Flask, request, jsonify, render_template
 from flask_cors import CORS
+from flask_mail import Mail, Message
 
 # ── Inicialización ────────────────────────────────────────────────────────────
 app = Flask(__name__)
 CORS(app)
+
+# ── Configuración de correo (Gmail) ───────────────────────────────────────────
+# Las credenciales se leen desde variables de entorno de Render.
+# No pongas tu contraseña directamente aquí.
+app.config['MAIL_SERVER']         = 'smtp.gmail.com'
+app.config['MAIL_PORT']           = 587
+app.config['MAIL_USE_TLS']        = True
+app.config['MAIL_USERNAME']       = os.environ.get('MAIL_USERNAME')
+app.config['MAIL_PASSWORD']       = os.environ.get('MAIL_PASSWORD')
+app.config['MAIL_DEFAULT_SENDER'] = os.environ.get('MAIL_USERNAME')
+
+mail = Mail(app)
 
 # ── Carga del modelo entrenado ────────────────────────────────────────────────
 MODEL_PATH = os.path.join(os.path.dirname(__file__), 'model.pkl')
@@ -86,19 +81,7 @@ def predict():
         "AGE": 45,
         "GENDER": 1,
         "SMOKING": 0,
-        "FINGER_DISCOLORATION": 1,
-        "MENTAL_STRESS": 1,
-        "EXPOSURE_TO_POLLUTION": 0,
-        "LONG_TERM_ILLNESS": 1,
-        "IMMUNE_WEAKNESS": 0,
-        "BREATHING_ISSUE": 1,
-        "ALCOHOL_CONSUMPTION": 0,
-        "THROAT_DISCOMFORT": 1,
-        "CHEST_TIGHTNESS": 1,
-        "FAMILY_HISTORY": 0,
-        "SMOKING_FAMILY_HISTORY": 1,
-        "STRESS_IMMUNE": 0,
-        "ENERGY_LEVEL": 45.5,
+        ...
         "OXYGEN_SATURATION": 94.3
     }
 
@@ -130,8 +113,8 @@ def predict():
     except (ValueError, TypeError):
         return jsonify({'error': 'Todos los valores deben ser numéricos.'}), 400
 
-    prediccion     = int(MODEL.predict(entrada)[0])       # 0 o 1
-    probabilidades = MODEL.predict_proba(entrada)[0]      # [P(0), P(1)]
+    prediccion     = int(MODEL.predict(entrada)[0])
+    probabilidades = MODEL.predict_proba(entrada)[0]
 
     prob_no  = float(probabilidades[0])
     prob_si  = float(probabilidades[1])
@@ -151,6 +134,63 @@ def predict():
         'probabilidad_si': round(prob_si, 4),
         'riesgo':          riesgo
     })
+
+
+@app.route('/send-report', methods=['POST'])
+def send_report():
+    """
+    Recibe el reporte PDF en base64 y lo envía al correo del paciente.
+
+    Body esperado (JSON):
+    {
+        "email":        "paciente@ejemplo.com",
+        "patient_name": "Juan García",
+        "pdf_base64":   "<string base64 del PDF>"
+    }
+    """
+    # Verificar que las credenciales de correo estén configuradas
+    if not os.environ.get('MAIL_USERNAME') or not os.environ.get('MAIL_PASSWORD'):
+        return jsonify({
+            'error': 'Servicio de correo no configurado en el servidor.'
+        }), 503
+
+    data         = request.get_json(silent=True)
+    to_email     = (data.get('email')        or '').strip()
+    patient_name = (data.get('patient_name') or 'Paciente').strip()
+    pdf_b64      = (data.get('pdf_base64')   or '').strip()
+
+    if not to_email or not pdf_b64:
+        return jsonify({'error': 'Faltan datos: email o pdf_base64.'}), 400
+
+    # Decodificar el PDF de base64 a bytes
+    try:
+        pdf_bytes = base64.b64decode(pdf_b64)
+    except Exception:
+        return jsonify({'error': 'El PDF recibido no es válido.'}), 400
+
+    # Nombre del archivo adjunto
+    nombre_archivo = f"PulmoCheck_Reporte_{patient_name.replace(' ', '_')}.pdf"
+
+    try:
+        msg = Message(
+            subject=f'PulmoCheck — Reporte de Análisis Pulmonar',
+            recipients=[to_email]
+        )
+        msg.body = (
+            f'Estimado/a {patient_name},\n\n'
+            'Adjunto encontrará su reporte de análisis pulmonar generado por PulmoCheck.\n\n'
+            'Este reporte ha sido generado mediante un modelo de Machine Learning '
+            '(Random Forest) y tiene carácter informativo. No reemplaza el diagnóstico '
+            'de un médico especialista.\n\n'
+            'Se recomienda compartir este reporte con su médico de cabecera.\n\n'
+            '— PulmoCheck · Ing. de Sistemas — 6.° Ciclo'
+        )
+        msg.attach(nombre_archivo, 'application/pdf', pdf_bytes)
+        mail.send(msg)
+        return jsonify({'success': True, 'message': f'Reporte enviado a {to_email}'})
+
+    except Exception as e:
+        return jsonify({'error': f'Error al enviar el correo: {str(e)}'}), 500
 
 
 if __name__ == '__main__':

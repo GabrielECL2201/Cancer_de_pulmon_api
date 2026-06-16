@@ -9,11 +9,9 @@
     href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&display=swap"
     rel="stylesheet"
   />
-  <!-- jsPDF para generar el reporte PDF en el navegador -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
   <style>
-    /* ── Variables & Reset ─────────────────────────────────────────────── */
     :root {
       --bg:      #f0f4f8;
       --surface: #ffffff;
@@ -40,7 +38,7 @@
       flex-direction: column;
     }
 
-    /* ── Header ────────────────────────────────────────────────────────── */
+    /* ── Header ─────────────────────────────────────────────────────── */
     header {
       background: var(--primary);
       color: #fff;
@@ -67,7 +65,7 @@
 
     header p { font-size: .85rem; opacity: .7; margin-top: .25rem; }
 
-    /* ── Layout ────────────────────────────────────────────────────────── */
+    /* ── Layout ──────────────────────────────────────────────────────── */
     main {
       max-width: 940px;
       margin: 2.5rem auto;
@@ -96,7 +94,6 @@
       gap: .6rem;
     }
 
-    /* ── Sección de campos ──────────────────────────────────────────────── */
     .section-label {
       font-size: .72rem;
       font-weight: 700;
@@ -108,7 +105,7 @@
       border-bottom: 1px solid var(--border);
     }
 
-    /* ── Form Grid ─────────────────────────────────────────────────────── */
+    /* ── Form ────────────────────────────────────────────────────────── */
     .form-grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
@@ -138,7 +135,9 @@
       letter-spacing: 0;
     }
 
+    input[type="text"],
     input[type="number"],
+    input[type="email"],
     select {
       border: 1.5px solid var(--border);
       border-radius: 8px;
@@ -151,17 +150,22 @@
       width: 100%;
     }
 
-    input[type="number"]:focus,
-    select:focus {
+    input:focus, select:focus {
       outline: none;
       border-color: var(--accent);
       box-shadow: 0 0 0 3px rgba(46,134,171,.13);
       background: #fff;
     }
 
+    /* Campo con error de rango */
+    input.input-error {
+      border-color: var(--danger);
+      background: #fff8f8;
+    }
+
     .hint { font-size: .72rem; color: var(--muted); line-height: 1.4; }
 
-    /* ── Submit ─────────────────────────────────────────────────────────── */
+    /* ── Botón principal ─────────────────────────────────────────────── */
     .btn-predict {
       display: block;
       width: 100%;
@@ -183,7 +187,7 @@
     .btn-predict:active { transform: scale(.98); }
     .btn-predict:disabled { background: var(--muted); cursor: not-allowed; }
 
-    /* ── Resultado — gauge ──────────────────────────────────────────────── */
+    /* ── Resultado ───────────────────────────────────────────────────── */
     #result-section { display: none; }
 
     .gauge-wrap {
@@ -194,7 +198,6 @@
     }
 
     .gauge-svg { width: 200px; height: 200px; }
-
     .gauge-track { fill: none; stroke: var(--border); stroke-width: 14; }
 
     .gauge-arc {
@@ -203,8 +206,7 @@
       stroke-linecap: round;
       transform: rotate(-90deg);
       transform-origin: 50% 50%;
-      transition: stroke-dashoffset 1.3s cubic-bezier(.4,0,.2,1),
-                  stroke           .4s ease;
+      transition: stroke-dashoffset 1.3s cubic-bezier(.4,0,.2,1), stroke .4s ease;
     }
 
     .gauge-pct {
@@ -243,6 +245,22 @@
 
     .divider { border: none; border-top: 1.5px solid var(--border); margin: 1.4rem 0; }
 
+    .risk-wrap { display: flex; justify-content: center; margin: 1.1rem 0 .5rem; }
+
+    .risk-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: .45rem;
+      padding: .4rem 1.1rem;
+      border-radius: 999px;
+      font-size: .85rem;
+      font-weight: 600;
+    }
+
+    .risk-alto     { background: #fff0f0; color: var(--danger);  border: 1.5px solid #f5c6c6; }
+    .risk-moderado { background: #fff7ed; color: var(--warn);    border: 1.5px solid #fcd6a0; }
+    .risk-bajo     { background: #f0fff7; color: var(--success); border: 1.5px solid #a8dfc5; }
+
     /* Barras comparativas */
     .prob-title {
       font-size: .75rem;
@@ -254,7 +272,6 @@
     }
 
     .prob-row { display: flex; align-items: center; gap: .8rem; margin-bottom: .7rem; }
-
     .prob-name { font-size: .85rem; font-weight: 500; width: 185px; flex-shrink: 0; }
 
     .prob-bar-wrap {
@@ -274,42 +291,10 @@
     .bar-no { background: var(--success); }
     .bar-si { background: var(--danger); }
 
-    .prob-pct {
-      font-size: .85rem;
-      font-weight: 700;
-      width: 42px;
-      text-align: right;
-      flex-shrink: 0;
-    }
+    .prob-pct { font-size: .85rem; font-weight: 700; width: 42px; text-align: right; flex-shrink: 0; }
 
-    /* Risk Pill */
-    .risk-wrap { display: flex; justify-content: center; margin: 1.1rem 0 .5rem; }
-
-    .risk-pill {
-      display: inline-flex;
-      align-items: center;
-      gap: .45rem;
-      padding: .4rem 1.1rem;
-      border-radius: 999px;
-      font-size: .85rem;
-      font-weight: 600;
-    }
-
-    .risk-alto     { background: #fff0f0; color: var(--danger);  border: 1.5px solid #f5c6c6; }
-    .risk-moderado { background: #fff7ed; color: var(--warn);    border: 1.5px solid #fcd6a0; }
-    .risk-bajo     { background: #f0fff7; color: var(--success); border: 1.5px solid #a8dfc5; }
-
-    /* ══════════════════════════════════════════════════════════════════
-       RECOMENDACIONES PERSONALIZADAS
-    ══════════════════════════════════════════════════════════════════ */
-    .recom-section { margin-top: .5rem; }
-
-    .recom-intro {
-      font-size: .88rem;
-      color: var(--muted);
-      margin-bottom: 1rem;
-      line-height: 1.6;
-    }
+    /* ── Recomendaciones ─────────────────────────────────────────────── */
+    .recom-intro { font-size: .88rem; color: var(--muted); margin-bottom: 1rem; line-height: 1.6; }
 
     .recom-grid {
       display: grid;
@@ -325,34 +310,13 @@
       border-radius: 10px;
       border: 1.5px solid var(--border);
       background: #f7fafc;
-      transition: border-color .2s;
     }
 
-    .recom-card:hover { border-color: var(--accent); }
-
-    .recom-icon {
-      font-size: 1.4rem;
-      flex-shrink: 0;
-      line-height: 1;
-      margin-top: .1rem;
-    }
-
+    .recom-icon { font-size: 1.4rem; flex-shrink: 0; line-height: 1; margin-top: .1rem; }
     .recom-body { flex: 1; }
+    .recom-title { font-size: .85rem; font-weight: 600; color: var(--primary); margin-bottom: .25rem; }
+    .recom-desc  { font-size: .78rem; color: var(--muted); line-height: 1.5; }
 
-    .recom-title {
-      font-size: .85rem;
-      font-weight: 600;
-      color: var(--primary);
-      margin-bottom: .25rem;
-    }
-
-    .recom-desc {
-      font-size: .78rem;
-      color: var(--muted);
-      line-height: 1.5;
-    }
-
-    /* Badge de urgencia */
     .recom-badge {
       display: inline-block;
       font-size: .65rem;
@@ -364,11 +328,10 @@
       letter-spacing: .04em;
     }
 
-    .badge-urgente  { background: #fff0f0; color: var(--danger); }
-    .badge-moderado { background: #fff7ed; color: var(--warn); }
+    .badge-urgente    { background: #fff0f0; color: var(--danger); }
+    .badge-moderado   { background: #fff7ed; color: var(--warn); }
     .badge-preventivo { background: #f0fff7; color: var(--success); }
 
-    /* Mensaje si no hay recomendaciones específicas */
     .recom-empty {
       text-align: center;
       padding: 1.5rem;
@@ -379,34 +342,85 @@
       border: 1.5px solid #a8dfc5;
     }
 
-    /* ══════════════════════════════════════════════════════════════════
-       BOTÓN DESCARGA PDF
-    ══════════════════════════════════════════════════════════════════ */
-    .btn-pdf {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: .6rem;
-      width: 100%;
-      padding: .85rem;
-      background: #fff;
-      color: var(--primary);
-      font-family: 'DM Sans', sans-serif;
-      font-size: .95rem;
-      font-weight: 600;
-      border: 2px solid var(--primary);
+    /* ── Sección de envío por correo ─────────────────────────────────── */
+    .email-section {
+      background: #f0f7ff;
+      border: 1.5px solid #b8d4e8;
       border-radius: 10px;
-      cursor: pointer;
-      transition: background .2s, color .2s;
+      padding: 1.25rem 1.5rem;
       margin-top: 1.25rem;
     }
 
-    .btn-pdf:hover {
-      background: var(--primary);
-      color: #fff;
+    .email-header {
+      display: flex;
+      align-items: center;
+      gap: .75rem;
+      margin-bottom: 1rem;
     }
 
-    /* Disclaimer */
+    .email-header-icon {
+      font-size: 1.5rem;
+      flex-shrink: 0;
+    }
+
+    .email-title { font-size: .95rem; font-weight: 600; color: var(--primary); }
+    .email-sub   { font-size: .78rem; color: var(--muted); margin-top: .15rem; }
+
+    .email-row {
+      display: flex;
+      gap: .75rem;
+    }
+
+    .email-input {
+      flex: 1;
+      border: 1.5px solid var(--border);
+      border-radius: 8px;
+      padding: .6rem .9rem;
+      font-family: 'DM Sans', sans-serif;
+      font-size: .95rem;
+      color: var(--text);
+      background: #fff;
+      transition: border-color .2s, box-shadow .2s;
+    }
+
+    .email-input:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(46,134,171,.13);
+    }
+
+    .btn-send-email {
+      display: flex;
+      align-items: center;
+      gap: .5rem;
+      padding: .6rem 1.4rem;
+      background: var(--accent);
+      color: #fff;
+      font-family: 'DM Sans', sans-serif;
+      font-size: .9rem;
+      font-weight: 600;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background .2s;
+      white-space: nowrap;
+    }
+
+    .btn-send-email:hover    { background: #256e8a; }
+    .btn-send-email:disabled { background: var(--muted); cursor: not-allowed; }
+
+    .email-status {
+      margin-top: .75rem;
+      font-size: .85rem;
+      border-radius: 6px;
+      padding: .5rem .8rem;
+      display: none;
+    }
+
+    .status-success { background: #f0fff7; color: var(--success); border: 1px solid #a8dfc5; display: block; }
+    .status-error   { background: #fff0f0; color: var(--danger);  border: 1px solid #f5c6c6; display: block; }
+
+    /* ── Disclaimer ──────────────────────────────────────────────────── */
     .disclaimer {
       font-size: .78rem;
       color: var(--muted);
@@ -418,15 +432,14 @@
       margin-top: 1.25rem;
     }
 
-    /* Spinner / Error */
+    /* ── Spinner / Error banner ──────────────────────────────────────── */
     .spinner {
       display: none;
-      width: 20px; height: 20px;
+      width: 18px; height: 18px;
       border: 2.5px solid rgba(255,255,255,.35);
       border-top-color: #fff;
       border-radius: 50%;
       animation: spin .7s linear infinite;
-      margin: 0 auto;
     }
     @keyframes spin { to { transform: rotate(360deg); } }
 
@@ -453,6 +466,7 @@
     @media (max-width: 600px) {
       .form-grid  { grid-template-columns: 1fr; }
       .recom-grid { grid-template-columns: 1fr; }
+      .email-row  { flex-direction: column; }
       .card { padding: 1.5rem 1.25rem; }
       header { padding: 1.5rem; }
     }
@@ -460,7 +474,6 @@
 </head>
 <body>
 
-  <!-- ── Header ───────────────────────────────────────────────────────────── -->
   <header>
     <div class="header-icon">🫁</div>
     <div>
@@ -471,12 +484,26 @@
 
   <main>
 
-    <!-- ── Formulario ────────────────────────────────────────────────────── -->
+    <!-- ═══════════════════════════════════════════════════════════════
+         FORMULARIO
+    ════════════════════════════════════════════════════════════════ -->
     <div class="card">
       <div class="card-title">📋 Datos del Paciente</div>
 
       <form id="prediction-form" novalidate>
 
+        <!-- ── Nombre del paciente ──────────────────────────────────── -->
+        <div class="form-grid">
+          <div class="form-group full">
+            <label for="PATIENT_NAME">Nombre completo del paciente</label>
+            <input type="text" id="PATIENT_NAME" name="PATIENT_NAME"
+                   placeholder="Ej. Juan García López"
+                   autocomplete="name" required />
+            <span class="hint">Nombre que aparecerá en el reporte</span>
+          </div>
+        </div>
+
+        <!-- ── Datos generales ──────────────────────────────────────── -->
         <div class="section-label">Datos generales</div>
         <div class="form-grid">
 
@@ -522,6 +549,7 @@
 
         </div>
 
+        <!-- ── Hábitos y exposición ─────────────────────────────────── -->
         <div class="section-label">Hábitos y exposición</div>
         <div class="form-grid">
 
@@ -571,6 +599,7 @@
 
         </div>
 
+        <!-- ── Síntomas ─────────────────────────────────────────────── -->
         <div class="section-label">Síntomas</div>
         <div class="form-grid">
 
@@ -620,6 +649,7 @@
 
         </div>
 
+        <!-- ── Historial médico ─────────────────────────────────────── -->
         <div class="section-label">Historial médico y condiciones</div>
         <div class="form-grid">
 
@@ -689,23 +719,20 @@
       </form>
     </div>
 
-    <!-- ════════════════════════════════════════════════════════════════════
+    <!-- ═══════════════════════════════════════════════════════════════
          RESULTADO
-    ════════════════════════════════════════════════════════════════════ -->
+    ════════════════════════════════════════════════════════════════ -->
     <div class="card" id="result-section">
       <div class="card-title">📊 Resultado del Análisis</div>
 
-      <!-- Gauge principal -->
+      <!-- Gauge circular -->
       <div class="gauge-wrap">
         <svg class="gauge-svg" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
           <circle class="gauge-track" cx="100" cy="100" r="80" />
-          <circle
-            class="gauge-arc"
-            id="gauge-arc"
-            cx="100" cy="100" r="80"
-            stroke-dasharray="502.65"
-            stroke-dashoffset="502.65"
-          />
+          <circle class="gauge-arc" id="gauge-arc"
+                  cx="100" cy="100" r="80"
+                  stroke-dasharray="502.65"
+                  stroke-dashoffset="502.65" />
           <text class="gauge-pct" id="gauge-pct" x="100" y="93">0%</text>
           <text class="gauge-sub" x="100" y="118">probabilidad de</text>
           <text class="gauge-sub" x="100" y="133">enfermedad pulmonar</text>
@@ -742,23 +769,37 @@
 
       <hr class="divider" />
 
-      <!-- ── RECOMENDACIONES PERSONALIZADAS ────────────────────────────── -->
+      <!-- Recomendaciones -->
       <div class="card-title" style="margin-bottom:1rem;">
         💡 Recomendaciones Personalizadas
       </div>
 
-      <div class="recom-section">
-        <p class="recom-intro" id="recom-intro">
-          Basado en los datos ingresados, se identificaron los siguientes factores
-          de riesgo modificables y acciones recomendadas para este paciente:
-        </p>
-        <div class="recom-grid" id="recom-grid"></div>
-      </div>
+      <p class="recom-intro" id="recom-intro"></p>
+      <div class="recom-grid" id="recom-grid"></div>
 
-      <!-- Botón PDF -->
-      <button class="btn-pdf" id="btn-pdf" onclick="descargarPDF()">
-        📄 Descargar Reporte PDF
-      </button>
+      <hr class="divider" />
+
+      <!-- ── Envío por correo ───────────────────────────────────────── -->
+      <div class="email-section">
+        <div class="email-header">
+          <span class="email-header-icon">📧</span>
+          <div>
+            <div class="email-title">Enviar reporte al correo del paciente</div>
+            <div class="email-sub">
+              Se enviará el reporte completo con resultados y recomendaciones personalizadas
+            </div>
+          </div>
+        </div>
+        <div class="email-row">
+          <input type="email" id="patient-email" class="email-input"
+                 placeholder="correo@ejemplo.com" />
+          <button class="btn-send-email" id="btn-send-email" onclick="enviarReporte()">
+            <span id="btn-send-text">Enviar reporte</span>
+            <div class="spinner" id="spinner-email"></div>
+          </button>
+        </div>
+        <div class="email-status" id="email-status"></div>
+      </div>
 
       <!-- Disclaimer -->
       <div class="disclaimer">
@@ -775,11 +816,11 @@
     PulmoCheck &nbsp;·&nbsp; Random Forest · Scikit-learn · Flask &nbsp;·&nbsp; Ing. de Sistemas — 6.° Ciclo
   </footer>
 
-  <!-- ══════════════════════════════════════════════════════════════════════
+  <!-- ═══════════════════════════════════════════════════════════════
        JAVASCRIPT
-  ══════════════════════════════════════════════════════════════════════ -->
+  ════════════════════════════════════════════════════════════════ -->
   <script>
-    /* ── FIELD MAP ────────────────────────────────────────────────────── */
+    /* ── FIELD MAP ─────────────────────────────────────────────────── */
     const FIELD_MAP = {
       AGE:                    'AGE',
       GENDER:                 'GENDER',
@@ -800,7 +841,6 @@
       OXYGEN_SATURATION:      'OXYGEN_SATURATION'
     };
 
-    /* Etiquetas legibles para el PDF */
     const FIELD_LABELS = {
       AGE:                    'Edad',
       GENDER:                 'Género',
@@ -821,6 +861,13 @@
       OXYGEN_SATURATION:      'Saturación de oxígeno (%)'
     };
 
+    /* Rangos válidos para los campos numéricos */
+    const RANGOS = {
+      AGE:               { min: 30,    max: 84,    label: 'Edad',                    unidad: 'años'  },
+      ENERGY_LEVEL:      { min: 23.26, max: 83.05, label: 'Nivel de Energía',        unidad: ''      },
+      OXYGEN_SATURATION: { min: 89.92, max: 99.80, label: 'Saturación de Oxígeno',   unidad: '%'     }
+    };
+
     const CIRCUMFERENCE = 2 * Math.PI * 80;
     const API_URL       = '/predict';
 
@@ -831,15 +878,26 @@
     const errBanner = document.getElementById('error-banner');
     const resultSec = document.getElementById('result-section');
 
-    // Variables globales para el PDF
-    let _lastData     = null;   // respuesta de la API
-    let _lastPayload  = null;   // datos del formulario
-    let _lastRecomend = [];     // recomendaciones generadas
+    // Variables globales para el PDF y correo
+    let _lastData     = null;
+    let _lastPayload  = null;
+    let _lastRecomend = [];
+    let _patientName  = '';
 
-    /* ── SUBMIT ──────────────────────────────────────────────────────── */
+    /* ── SUBMIT ──────────────────────────────────────────────────── */
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
+      hideError();
 
+      // 1. Validar nombre del paciente
+      const nameInput = document.getElementById('PATIENT_NAME');
+      if (!nameInput.value.trim()) {
+        showError('Por favor ingresa el nombre completo del paciente.');
+        nameInput.focus();
+        return;
+      }
+
+      // 2. Validar que todos los campos estén completos
       const fields = form.querySelectorAll('[required]');
       for (const f of fields) {
         if (f.value === '' || f.value == null) {
@@ -849,13 +907,22 @@
         }
       }
 
+      // 3. Construir payload
       const payload = {};
       for (const [htmlId, featName] of Object.entries(FIELD_MAP)) {
         payload[featName] = parseFloat(document.getElementById(htmlId).value);
       }
 
+      // 4. Validar rangos de campos numéricos
+      const errRango = validarRangos(payload);
+      if (errRango) {
+        showError(errRango);
+        return;
+      }
+
+      _patientName = nameInput.value.trim();
+
       setLoading(true);
-      hideError();
       resultSec.style.display = 'none';
 
       try {
@@ -878,26 +945,47 @@
 
       } catch (err) {
         showError(
-          'No se pudo conectar con la API. Verifica que Flask esté corriendo en http://localhost:5000. ' +
-          '(' + err.message + ')'
+          'No se pudo conectar con la API. Verifica que Flask esté corriendo. (' + err.message + ')'
         );
       } finally {
         setLoading(false);
       }
     });
 
-    /* ── RENDER RESULTADO ────────────────────────────────────────────── */
+    /* ── VALIDACIÓN DE RANGOS ────────────────────────────────────── */
+    function validarRangos(payload) {
+      for (const [campo, rango] of Object.entries(RANGOS)) {
+        const val = payload[campo];
+        const el  = document.getElementById(campo);
+
+        if (isNaN(val) || val < rango.min || val > rango.max) {
+          // Marcar campo en rojo
+          if (el) { el.classList.add('input-error'); el.focus(); }
+          return `${rango.label}: el valor ${isNaN(val) ? 'no es válido' : val} está fuera del rango permitido (${rango.min} – ${rango.max}${rango.unidad ? ' ' + rango.unidad : ''}).`;
+        } else {
+          if (el) el.classList.remove('input-error');
+        }
+      }
+      return null; // Sin errores
+    }
+
+    // Quitar marcado de error cuando el usuario corrija el campo
+    ['AGE', 'ENERGY_LEVEL', 'OXYGEN_SATURATION'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.addEventListener('input', () => el.classList.remove('input-error'));
+    });
+
+    /* ── RENDER RESULTADO ────────────────────────────────────────── */
     function renderResult(data, payload) {
       const esSi  = data.prediccion === 1;
       const probN = Math.round(data.probabilidad_no * 100);
       const probS = Math.round(data.probabilidad_si * 100);
 
-      // Color gauge
-      let gaugeColor =
+      const gaugeColor =
         data.riesgo === 'Alto'     ? 'var(--danger)' :
         data.riesgo === 'Moderado' ? 'var(--warn)'   : 'var(--success)';
 
-      // Animar gauge
+      // Gauge
       const arc = document.getElementById('gauge-arc');
       arc.style.stroke = gaugeColor;
       arc.style.transition = 'none';
@@ -923,7 +1011,7 @@
 
       // Risk pill
       const pill = document.getElementById('risk-pill');
-      const rm = { Alto: {cls:'risk-alto', icon:'🔴'}, Moderado: {cls:'risk-moderado', icon:'🟠'}, Bajo: {cls:'risk-bajo', icon:'🟢'} };
+      const rm = { Alto:{cls:'risk-alto',icon:'🔴'}, Moderado:{cls:'risk-moderado',icon:'🟠'}, Bajo:{cls:'risk-bajo',icon:'🟢'} };
       const r = rm[data.riesgo] || rm['Bajo'];
       pill.className   = 'risk-pill ' + r.cls;
       pill.textContent = r.icon + '  Nivel de riesgo: ' + data.riesgo;
@@ -940,167 +1028,103 @@
       _lastRecomend = generarRecomendaciones(payload, data);
       renderRecomendaciones(_lastRecomend);
 
+      // Limpiar estado de correo anterior
+      document.getElementById('patient-email').value = '';
+      document.getElementById('email-status').className = 'email-status';
+      document.getElementById('email-status').textContent = '';
+
       resultSec.style.display = 'block';
       resultSec.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
 
-    /* ── GENERADOR DE RECOMENDACIONES ────────────────────────────────── */
-    /*
-      Cada recomendación tiene:
-        icon    : emoji
-        urgencia: 'urgente' | 'moderado' | 'preventivo'
-        titulo  : texto corto
-        desc    : explicación breve
-      Solo se incluye si el paciente tiene ese factor de riesgo.
-    */
+    /* ── RECOMENDACIONES ─────────────────────────────────────────── */
     function generarRecomendaciones(payload, data) {
       const rec = [];
 
-      // ── Síntomas urgentes ──────────────────────────────────────────
-      if (payload['BREATHING_ISSUE'] === 1) {
-        rec.push({
-          icon: '🫁', urgencia: 'urgente',
-          titulo: 'Evaluación respiratoria urgente',
-          desc: 'Se detectó problema respiratorio activo. Consulte a un neumólogo para una espirometría y diagnóstico formal.'
-        });
-      }
+      if (payload['BREATHING_ISSUE'] === 1)
+        rec.push({ icon:'🫁', urgencia:'urgente', titulo:'Evaluación respiratoria urgente',
+          desc:'Se detectó problema respiratorio activo. Consulte a un neumólogo para una espirometría y diagnóstico formal.' });
 
-      if (payload['CHEST_TIGHTNESS'] === 1) {
-        rec.push({
-          icon: '❤️', urgencia: 'urgente',
-          titulo: 'Revisión cardiopulmonar',
-          desc: 'La opresión en el pecho puede indicar complicaciones cardíacas o pulmonares. Se recomienda evaluación médica inmediata.'
-        });
-      }
+      if (payload['CHEST_TIGHTNESS'] === 1)
+        rec.push({ icon:'❤️', urgencia:'urgente', titulo:'Revisión cardiopulmonar',
+          desc:'La opresión en el pecho puede indicar complicaciones cardíacas o pulmonares. Se recomienda evaluación médica inmediata.' });
 
-      if (payload['OXYGEN_SATURATION'] < 95) {
-        rec.push({
-          icon: '📉', urgencia: 'urgente',
-          titulo: 'Saturación de oxígeno baja',
-          desc: `Su SpO₂ registrado (${payload['OXYGEN_SATURATION'].toFixed(1)}%) está por debajo del nivel óptimo (≥95%). Monitoreo continuo y consulta médica urgente.`
-        });
-      }
+      if (payload['OXYGEN_SATURATION'] < 95)
+        rec.push({ icon:'📉', urgencia:'urgente', titulo:'Saturación de oxígeno baja',
+          desc:`Su SpO₂ registrado (${payload['OXYGEN_SATURATION'].toFixed(1)}%) está por debajo del nivel óptimo (≥95%). Monitoreo continuo y consulta médica urgente.` });
 
-      if (payload['FINGER_DISCOLORATION'] === 1) {
-        rec.push({
-          icon: '🖐️', urgencia: 'urgente',
-          titulo: 'Evaluación de circulación periférica',
-          desc: 'La decoloración en los dedos puede indicar hipoxia crónica o mala circulación asociada a enfermedades pulmonares.'
-        });
-      }
+      if (payload['FINGER_DISCOLORATION'] === 1)
+        rec.push({ icon:'🖐️', urgencia:'urgente', titulo:'Evaluación de circulación periférica',
+          desc:'La decoloración en los dedos puede indicar hipoxia crónica o mala circulación asociada a enfermedades pulmonares.' });
 
-      // ── Hábitos modificables ───────────────────────────────────────
-      if (payload['SMOKING'] === 1) {
-        rec.push({
-          icon: '🚭', urgencia: 'urgente',
-          titulo: 'Dejar de fumar',
-          desc: 'El tabaquismo es el principal factor de riesgo pulmonar modificable. Se recomienda buscar un programa de cesación tabáquica de inmediato.'
-        });
-      }
+      if (payload['SMOKING'] === 1)
+        rec.push({ icon:'🚭', urgencia:'urgente', titulo:'Dejar de fumar',
+          desc:'El tabaquismo es el principal factor de riesgo pulmonar modificable. Se recomienda un programa de cesación tabáquica de inmediato.' });
 
-      if (payload['ALCOHOL_CONSUMPTION'] === 1) {
-        rec.push({
-          icon: '🍷', urgencia: 'moderado',
-          titulo: 'Reducir consumo de alcohol',
-          desc: 'El consumo de alcohol debilita el sistema inmune y aumenta la vulnerabilidad a infecciones respiratorias. Se recomienda reducirlo o eliminarlo.'
-        });
-      }
+      if (payload['ALCOHOL_CONSUMPTION'] === 1)
+        rec.push({ icon:'🍷', urgencia:'moderado', titulo:'Reducir consumo de alcohol',
+          desc:'El consumo de alcohol debilita el sistema inmune y aumenta la vulnerabilidad a infecciones respiratorias. Se recomienda reducirlo o eliminarlo.' });
 
-      if (payload['EXPOSURE_TO_POLLUTION'] === 1) {
-        rec.push({
-          icon: '😷', urgencia: 'moderado',
-          titulo: 'Reducir exposición a contaminación',
-          desc: 'Use mascarilla en ambientes contaminados, evite zonas de alta polución y ventile adecuadamente los espacios cerrados.'
-        });
-      }
+      if (payload['EXPOSURE_TO_POLLUTION'] === 1)
+        rec.push({ icon:'😷', urgencia:'moderado', titulo:'Reducir exposición a contaminación',
+          desc:'Use mascarilla en ambientes contaminados, evite zonas de alta polución y ventile adecuadamente los espacios cerrados.' });
 
-      if (payload['MENTAL_STRESS'] === 1) {
-        rec.push({
-          icon: '🧘', urgencia: 'moderado',
-          titulo: 'Manejo del estrés mental',
-          desc: 'El estrés crónico deteriora el sistema inmune. Se recomienda técnicas de relajación, actividad física moderada y apoyo psicológico si es necesario.'
-        });
-      }
+      if (payload['MENTAL_STRESS'] === 1)
+        rec.push({ icon:'🧘', urgencia:'moderado', titulo:'Manejo del estrés mental',
+          desc:'El estrés crónico deteriora el sistema inmune. Se recomiendan técnicas de relajación, actividad física moderada y apoyo psicológico si es necesario.' });
 
-      // ── Energía baja ───────────────────────────────────────────────
-      if (payload['ENERGY_LEVEL'] < 40) {
-        rec.push({
-          icon: '⚡', urgencia: 'moderado',
-          titulo: 'Nivel de energía bajo',
-          desc: `Su nivel de energía (${payload['ENERGY_LEVEL'].toFixed(1)}) es bajo. Esto puede estar relacionado con problemas de oxigenación. Consulte a su médico.`
-        });
-      }
+      if (payload['ENERGY_LEVEL'] < 40)
+        rec.push({ icon:'⚡', urgencia:'moderado', titulo:'Nivel de energía bajo',
+          desc:`Su nivel de energía (${payload['ENERGY_LEVEL'].toFixed(1)}) es bajo. Esto puede estar relacionado con problemas de oxigenación. Consulte a su médico.` });
 
-      // ── Condiciones médicas ────────────────────────────────────────
-      if (payload['LONG_TERM_ILLNESS'] === 1) {
-        rec.push({
-          icon: '🏥', urgencia: 'moderado',
-          titulo: 'Control de enfermedad crónica',
-          desc: 'Las enfermedades crónicas aumentan el riesgo pulmonar. Mantenga controles médicos regulares y siga el tratamiento prescrito rigurosamente.'
-        });
-      }
+      if (payload['LONG_TERM_ILLNESS'] === 1)
+        rec.push({ icon:'🏥', urgencia:'moderado', titulo:'Control de enfermedad crónica',
+          desc:'Las enfermedades crónicas aumentan el riesgo pulmonar. Mantenga controles médicos regulares y siga el tratamiento prescrito rigurosamente.' });
 
-      if (payload['IMMUNE_WEAKNESS'] === 1 || payload['STRESS_IMMUNE'] === 1) {
-        rec.push({
-          icon: '🛡️', urgencia: 'moderado',
-          titulo: 'Fortalecer el sistema inmune',
-          desc: 'Se detectó debilidad inmune. Mantenga una dieta equilibrada, descanse adecuadamente y consulte con su médico sobre posibles suplementos o tratamientos.'
-        });
-      }
+      if (payload['IMMUNE_WEAKNESS'] === 1 || payload['STRESS_IMMUNE'] === 1)
+        rec.push({ icon:'🛡️', urgencia:'moderado', titulo:'Fortalecer el sistema inmune',
+          desc:'Se detectó debilidad inmune. Mantenga una dieta equilibrada, descanse adecuadamente y consulte sobre posibles suplementos o tratamientos.' });
 
-      if (payload['THROAT_DISCOMFORT'] === 1) {
-        rec.push({
-          icon: '🔬', urgencia: 'moderado',
-          titulo: 'Revisión de vías respiratorias altas',
-          desc: 'Las molestias en la garganta recurrentes pueden ser señal de inflamación crónica. Se recomienda consulta con otorrinolaringólogo.'
-        });
-      }
+      if (payload['THROAT_DISCOMFORT'] === 1)
+        rec.push({ icon:'🔬', urgencia:'moderado', titulo:'Revisión de vías respiratorias altas',
+          desc:'Las molestias en la garganta recurrentes pueden ser señal de inflamación crónica. Se recomienda consulta con otorrinolaringólogo.' });
 
-      // ── Historial familiar ─────────────────────────────────────────
-      if (payload['FAMILY_HISTORY'] === 1 || payload['SMOKING_FAMILY_HISTORY'] === 1) {
-        rec.push({
-          icon: '🧬', urgencia: 'preventivo',
-          titulo: 'Vigilancia por antecedentes familiares',
-          desc: 'Los antecedentes familiares de enfermedades pulmonares o tabaquismo aumentan su riesgo genético. Realice chequeos pulmonares preventivos anuales.'
-        });
-      }
+      if (payload['FAMILY_HISTORY'] === 1 || payload['SMOKING_FAMILY_HISTORY'] === 1)
+        rec.push({ icon:'🧬', urgencia:'preventivo', titulo:'Vigilancia por antecedentes familiares',
+          desc:'Los antecedentes familiares aumentan su riesgo genético. Realice chequeos pulmonares preventivos anuales.' });
 
-      // ── Recomendación general si no hay factores ───────────────────
-      if (rec.length === 0) {
-        rec.push({
-          icon: '✅', urgencia: 'preventivo',
-          titulo: 'Mantener hábitos saludables',
-          desc: 'No se detectaron factores de riesgo modificables. Continúe con una dieta balanceada, ejercicio regular y controles médicos preventivos anuales.'
-        });
-      }
+      if (rec.length === 0)
+        rec.push({ icon:'✅', urgencia:'preventivo', titulo:'Mantener hábitos saludables',
+          desc:'No se detectaron factores de riesgo modificables. Continúe con una dieta balanceada, ejercicio regular y controles médicos preventivos anuales.' });
 
       return rec;
     }
 
-    /* ── RENDER RECOMENDACIONES ──────────────────────────────────────── */
     function renderRecomendaciones(recomendaciones) {
       const grid  = document.getElementById('recom-grid');
       const intro = document.getElementById('recom-intro');
       grid.innerHTML = '';
 
-      if (recomendaciones.length === 1 && recomendaciones[0].urgencia === 'preventivo') {
-        intro.textContent = 'No se identificaron factores de riesgo modificables significativos para este paciente.';
+      const soloPreventivo = recomendaciones.length === 1 && recomendaciones[0].urgencia === 'preventivo';
+      intro.textContent = soloPreventivo
+        ? 'No se identificaron factores de riesgo modificables significativos.'
+        : `Se identificaron ${recomendaciones.length} factor(es) de riesgo. Acciones recomendadas para este paciente:`;
+
+      const badgeMap = {
+        urgente:    { cls:'badge-urgente',    label:'Prioritario' },
+        moderado:   { cls:'badge-moderado',   label:'Importante'  },
+        preventivo: { cls:'badge-preventivo', label:'Preventivo'  }
+      };
+
+      if (soloPreventivo) {
         grid.innerHTML = `<div class="recom-empty" style="grid-column:1/-1">
-          ✅ El paciente no presenta factores de riesgo modificables detectables. Se recomienda mantener los hábitos actuales y realizar controles preventivos anuales.
+          ✅ El paciente no presenta factores de riesgo modificables. Mantener hábitos saludables y controles anuales.
         </div>`;
         return;
       }
 
-      intro.textContent = `Se identificaron ${recomendaciones.length} factor(es) de riesgo. A continuación las acciones recomendadas para este paciente:`;
-
-      const badgeMap = {
-        urgente:    { cls: 'badge-urgente',   label: '⚠ Prioritario' },
-        moderado:   { cls: 'badge-moderado',  label: '⚡ Importante' },
-        preventivo: { cls: 'badge-preventivo', label: '✓ Preventivo' }
-      };
-
       recomendaciones.forEach(r => {
-        const b = badgeMap[r.urgencia];
+        const b    = badgeMap[r.urgencia];
         const card = document.createElement('div');
         card.className = 'recom-card';
         card.innerHTML = `
@@ -1109,35 +1133,100 @@
             <span class="recom-badge ${b.cls}">${b.label}</span>
             <div class="recom-title">${r.titulo}</div>
             <div class="recom-desc">${r.desc}</div>
-          </div>
-        `;
+          </div>`;
         grid.appendChild(card);
       });
     }
 
-    /* ── GENERADOR PDF ───────────────────────────────────────────────── */
-    function descargarPDF() {
+    /* ── ENVIAR REPORTE POR CORREO ───────────────────────────────── */
+    async function enviarReporte() {
+      const emailInput = document.getElementById('patient-email');
+      const email      = emailInput.value.trim();
+      const status     = document.getElementById('email-status');
+      const btn        = document.getElementById('btn-send-email');
+      const btnSText   = document.getElementById('btn-send-text');
+      const spinEmail  = document.getElementById('spinner-email');
+
+      // Validar correo
+      if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        status.textContent = '⚠ Por favor ingresa un correo electrónico válido.';
+        status.className   = 'email-status status-error';
+        return;
+      }
+
       if (!_lastData || !_lastPayload) return;
 
+      // Generar PDF en base64
+      let pdfBase64;
+      try {
+        pdfBase64 = generarPDFBase64();
+      } catch (err) {
+        status.textContent = '⚠ Error al generar el reporte PDF: ' + err.message;
+        status.className   = 'email-status status-error';
+        return;
+      }
+
+      // Deshabilitar botón y mostrar spinner
+      btn.disabled       = true;
+      btnSText.style.display = 'none';
+      spinEmail.style.display = 'block';
+      status.className   = 'email-status';
+      status.textContent = '';
+
+      try {
+        const res = await fetch('/send-report', {
+          method:  'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            email:        email,
+            patient_name: _patientName,
+            pdf_base64:   pdfBase64
+          })
+        });
+
+        const data = await res.json();
+        if (res.ok && data.success) {
+          status.textContent = `✅ Reporte enviado correctamente a ${email}`;
+          status.className   = 'email-status status-success';
+        } else {
+          status.textContent = '⚠ Error al enviar: ' + (data.error || 'intenta de nuevo.');
+          status.className   = 'email-status status-error';
+        }
+      } catch (err) {
+        status.textContent = '⚠ No se pudo conectar con el servidor. (' + err.message + ')';
+        status.className   = 'email-status status-error';
+      } finally {
+        btn.disabled            = false;
+        btnSText.style.display  = 'inline';
+        spinEmail.style.display = 'none';
+      }
+    }
+
+    /* ── GENERADOR PDF (retorna base64) ──────────────────────────── */
+    function generarPDFBase64() {
+      const doc = _buildPDF();
+      // Retorna solo el string base64 (sin el prefijo data:...)
+      return doc.output('datauristring').split(',')[1];
+    }
+
+    function _buildPDF() {
       const { jsPDF } = window.jspdf;
       const doc = new jsPDF({ unit: 'mm', format: 'a4' });
 
-      const W       = 210;   // ancho A4 en mm
-      const MARGIN  = 18;
+      const W      = 210;
+      const MARGIN = 18;
       const CONTENT = W - MARGIN * 2;
-      let y         = 0;
+      let y = 0;
 
-      // ── Colores ────────────────────────────────────────────────────
-      const C_PRIMARY  = [26,  63,  92];   // #1a3f5c
-      const C_ACCENT   = [46, 134, 171];   // #2e86ab
-      const C_DANGER   = [184,  64,  64];  // #b84040
-      const C_SUCCESS  = [45, 122,  95];   // #2d7a5f
-      const C_WARN     = [196, 127,  26];  // #c47f1a
-      const C_MUTED    = [107, 114, 128];  // #6b7280
-      const C_BORDER   = [209, 220, 230];  // #d1dce6
-      const C_BG_LIGHT = [240, 244, 248];  // #f0f4f8
+      const C_PRIMARY  = [26,  63,  92];
+      const C_ACCENT   = [46, 134, 171];
+      const C_DANGER   = [184,  64,  64];
+      const C_SUCCESS  = [45, 122,  95];
+      const C_WARN     = [196, 127,  26];
+      const C_MUTED    = [107, 114, 128];
+      const C_BORDER   = [209, 220, 230];
+      const C_BG_LIGHT = [240, 244, 248];
 
-      // ── Helpers ────────────────────────────────────────────────────
       function setFont(style = 'normal', size = 10) {
         doc.setFont('helvetica', style);
         doc.setFontSize(size);
@@ -1148,78 +1237,68 @@
       function colorFill(rgb) { doc.setFillColor(...rgb); }
 
       function checkPage(needed = 15) {
-        if (y + needed > 275) {
-          doc.addPage();
-          y = MARGIN;
-        }
+        if (y + needed > 275) { doc.addPage(); y = MARGIN; }
       }
 
-      function drawLine(yy, r = C_BORDER) {
-        colorDraw(r);
+      function drawLine(yy) {
+        colorDraw(C_BORDER);
         doc.setLineWidth(0.3);
         doc.line(MARGIN, yy, W - MARGIN, yy);
       }
 
-      // ── ENCABEZADO ─────────────────────────────────────────────────
-      // Banda de color
+      // ── Encabezado ─────────────────────────────────────────────
       colorFill(C_PRIMARY);
-      doc.rect(0, 0, W, 38, 'F');
+      doc.rect(0, 0, W, 42, 'F');
 
-      // Círculo del ícono
       colorFill([255, 255, 255]);
-      doc.circle(MARGIN + 10, 19, 8, 'F');
-      setFont('bold', 14); colorText([26, 63, 92]);
-      doc.text('P', MARGIN + 7.2, 23);
+      doc.circle(MARGIN + 10, 21, 8, 'F');
+      setFont('bold', 13); colorText([26, 63, 92]);
+      doc.text('P', MARGIN + 7.5, 25);
 
-      // Título
       setFont('bold', 18); colorText([255, 255, 255]);
-      doc.text('PulmoCheck', MARGIN + 22, 16);
+      doc.text('PulmoCheck', MARGIN + 22, 17);
       setFont('normal', 9); doc.setTextColor(200, 220, 235);
-      doc.text('Reporte de Análisis de Enfermedad Pulmonar', MARGIN + 22, 23);
-      doc.text('Random Forest · Ing. de Sistemas — 6.° Ciclo', MARGIN + 22, 29);
+      doc.text('Reporte de Analisis de Enfermedad Pulmonar', MARGIN + 22, 24);
+      doc.text('Random Forest · Ing. de Sistemas — 6. Ciclo', MARGIN + 22, 30);
 
-      // Fecha
+      // Nombre del paciente en el encabezado
+      setFont('bold', 10); doc.setTextColor(255, 255, 255);
+      doc.text(`Paciente: ${_patientName}`, MARGIN + 22, 37);
+
       const now = new Date();
       const fechaStr = now.toLocaleDateString('es-PE', { day:'2-digit', month:'long', year:'numeric' });
       const horaStr  = now.toLocaleTimeString('es-PE', { hour:'2-digit', minute:'2-digit' });
       setFont('normal', 8); doc.setTextColor(190, 215, 230);
-      doc.text(`Generado el ${fechaStr} a las ${horaStr}`, W - MARGIN, 34, { align: 'right' });
+      doc.text(`Generado el ${fechaStr} a las ${horaStr}`, W - MARGIN, 38, { align: 'right' });
 
-      y = 48;
+      y = 52;
 
-      // ── RESULTADO PRINCIPAL ────────────────────────────────────────
-      checkPage(45);
-      const probS   = Math.round(_lastData.probabilidad_si * 100);
-      const probN   = Math.round(_lastData.probabilidad_no * 100);
-      const esSi    = _lastData.prediccion === 1;
-      const riesgo  = _lastData.riesgo;
-      const diagColor = esSi ? C_DANGER : C_SUCCESS;
+      // ── Resultado principal ────────────────────────────────────
+      const probS  = Math.round(_lastData.probabilidad_si * 100);
+      const probN  = Math.round(_lastData.probabilidad_no * 100);
+      const esSi   = _lastData.prediccion === 1;
+      const riesgo = _lastData.riesgo;
+      const diagColor   = esSi ? C_DANGER : C_SUCCESS;
       const riesgoColor = riesgo === 'Alto' ? C_DANGER : riesgo === 'Moderado' ? C_WARN : C_SUCCESS;
 
-      // Caja de resultado
       colorFill(esSi ? [255, 240, 240] : [240, 255, 247]);
       colorDraw(esSi ? C_DANGER : C_SUCCESS);
       doc.setLineWidth(0.8);
       doc.roundedRect(MARGIN, y, CONTENT, 36, 3, 3, 'FD');
 
-      // Probabilidad (número grande)
       setFont('bold', 36); colorText(diagColor);
       doc.text(`${probS}%`, MARGIN + 10, y + 22);
 
-      // Texto diagnóstico
       setFont('bold', 13); colorText(diagColor);
-      doc.text(
-        esSi ? 'Posible Enfermedad Pulmonar' : 'Sin Enfermedad Pulmonar',
-        MARGIN + 48, y + 14
-      );
+      doc.text(esSi ? 'Posible Enfermedad Pulmonar' : 'Sin Enfermedad Pulmonar', MARGIN + 48, y + 14);
+
       setFont('normal', 9); colorText(C_MUTED);
       doc.text('de probabilidad de enfermedad pulmonar', MARGIN + 10, y + 29);
-      doc.text(
-        esSi ? 'El modelo predice presencia de enfermedad pulmonar.' : 'El modelo no detecta indicadores significativos.',
-        MARGIN + 48, y + 22
-      );
+      doc.text(esSi
+        ? 'El modelo predice presencia de enfermedad pulmonar.'
+        : 'El modelo no detecta indicadores significativos.',
+        MARGIN + 48, y + 22);
 
-      // Nivel de riesgo
       colorFill([255, 255, 255]);
       colorDraw(riesgoColor);
       doc.setLineWidth(0.5);
@@ -1229,36 +1308,43 @@
 
       y += 44;
 
-      // ── BARRAS DE PROBABILIDAD ─────────────────────────────────────
+      // ── Barras de probabilidad ─────────────────────────────────
       checkPage(24);
       setFont('bold', 9); colorText(C_MUTED);
       doc.text('PROBABILIDADES COMPARATIVAS', MARGIN, y);
       y += 6;
 
-      // Barra "Sin enfermedad"
       setFont('normal', 9); colorText(C_PRIMARY);
       doc.text('Sin enfermedad pulmonar (0)', MARGIN, y + 4);
-      colorFill(C_BORDER); doc.rect(MARGIN + 62, y, CONTENT - 75, 5, 'F');
-      colorFill(C_SUCCESS); doc.rect(MARGIN + 62, y, (CONTENT - 75) * (probN / 100), 5, 'F');
+      colorFill(C_BORDER); doc.rect(MARGIN + 65, y, CONTENT - 78, 5, 'F');
+      colorFill(C_SUCCESS); doc.rect(MARGIN + 65, y, (CONTENT - 78) * (probN / 100), 5, 'F');
       setFont('bold', 9); colorText(C_SUCCESS);
       doc.text(`${probN}%`, W - MARGIN, y + 4, { align: 'right' });
       y += 10;
 
-      // Barra "Con enfermedad"
       setFont('normal', 9); colorText(C_PRIMARY);
       doc.text('Con enfermedad pulmonar (1)', MARGIN, y + 4);
-      colorFill(C_BORDER); doc.rect(MARGIN + 62, y, CONTENT - 75, 5, 'F');
-      colorFill(C_DANGER); doc.rect(MARGIN + 62, y, (CONTENT - 75) * (probS / 100), 5, 'F');
+      colorFill(C_BORDER); doc.rect(MARGIN + 65, y, CONTENT - 78, 5, 'F');
+      colorFill(C_DANGER); doc.rect(MARGIN + 65, y, (CONTENT - 78) * (probS / 100), 5, 'F');
       setFont('bold', 9); colorText(C_DANGER);
       doc.text(`${probS}%`, W - MARGIN, y + 4, { align: 'right' });
       y += 14;
 
       drawLine(y); y += 8;
 
-      // ── DATOS DEL PACIENTE ─────────────────────────────────────────
+      // ── Datos del paciente ─────────────────────────────────────
       checkPage(10);
       setFont('bold', 11); colorText(C_PRIMARY);
       doc.text('Datos Ingresados del Paciente', MARGIN, y);
+      y += 7;
+
+      // Nombre
+      colorFill(C_BG_LIGHT);
+      doc.rect(MARGIN, y - 4, CONTENT, 7, 'F');
+      setFont('normal', 8); colorText(C_MUTED);
+      doc.text('Nombre del paciente:', MARGIN + 1, y);
+      setFont('bold', 8); colorText(C_PRIMARY);
+      doc.text(_patientName, W - MARGIN, y, { align: 'right' });
       y += 7;
 
       const campos = Object.entries(FIELD_LABELS);
@@ -1267,23 +1353,21 @@
       const col2   = campos.slice(mid);
 
       function valorLegible(key, val) {
-        if (key === 'GENDER')      return val === 0 ? 'Masculino' : 'Femenino';
-        if (key === 'ENERGY_LEVEL' || key === 'OXYGEN_SATURATION' || key === 'AGE')
-          return String(val);
-        return val === 1 ? 'Sí' : 'No';
+        if (key === 'GENDER') return val === 0 ? 'Masculino' : 'Femenino';
+        if (['ENERGY_LEVEL', 'OXYGEN_SATURATION', 'AGE'].includes(key)) return String(val);
+        return val === 1 ? 'Si' : 'No';
       }
 
       function drawCampos(lista, xOffset) {
         let yy = y;
         lista.forEach(([key, label], i) => {
-          const val = _lastPayload[key];
-          const bg  = i % 2 === 0 ? C_BG_LIGHT : [255, 255, 255];
+          const bg = i % 2 === 0 ? C_BG_LIGHT : [255, 255, 255];
           colorFill(bg);
           doc.rect(xOffset, yy - 4, CONTENT / 2 - 3, 7, 'F');
           setFont('normal', 8); colorText(C_MUTED);
           doc.text(label + ':', xOffset + 1, yy);
           setFont('bold', 8); colorText(C_PRIMARY);
-          doc.text(valorLegible(key, val), xOffset + CONTENT / 2 - 6, yy, { align: 'right' });
+          doc.text(valorLegible(key, _lastPayload[key]), xOffset + CONTENT / 2 - 6, yy, { align: 'right' });
           yy += 7;
         });
         return yy;
@@ -1296,49 +1380,42 @@
 
       drawLine(y); y += 8;
 
-      // ── RECOMENDACIONES ────────────────────────────────────────────
+      // ── Recomendaciones ────────────────────────────────────────
       checkPage(14);
       setFont('bold', 11); colorText(C_PRIMARY);
       doc.text('Recomendaciones Personalizadas', MARGIN, y);
       y += 7;
 
       const urgMap = {
-        urgente:    { label: 'PRIORITARIO', rgb: C_DANGER },
-        moderado:   { label: 'IMPORTANTE',  rgb: C_WARN },
+        urgente:    { label: 'PRIORITARIO', rgb: C_DANGER  },
+        moderado:   { label: 'IMPORTANTE',  rgb: C_WARN    },
         preventivo: { label: 'PREVENTIVO',  rgb: C_SUCCESS }
       };
 
       _lastRecomend.forEach((rec) => {
         const u = urgMap[rec.urgencia];
 
-        // Calcular líneas de descripción ANTES de dibujar el cuadro
-        setFont('normal', 8); colorText(C_MUTED);
+        setFont('normal', 8);
         const descLines  = doc.splitTextToSize(rec.desc, CONTENT - 12);
         const lineH      = 4.5;
-        // Altura dinámica: badge(6) + título(7) + descripción + padding(6)
         const cardHeight = 6 + 7 + (descLines.length * lineH) + 6;
 
         checkPage(cardHeight + 4);
 
-        // Fondo de la tarjeta
         colorFill([248, 250, 252]);
         colorDraw(C_BORDER);
         doc.setLineWidth(0.3);
         doc.roundedRect(MARGIN, y, CONTENT, cardHeight, 2, 2, 'FD');
 
-        // Barra lateral de color (altura dinámica)
         colorFill(u.rgb);
         doc.roundedRect(MARGIN, y, 3, cardHeight, 1, 1, 'F');
 
-        // Badge urgencia (sin emojis)
         setFont('bold', 7); colorText(u.rgb);
         doc.text(u.label, MARGIN + 6, y + 5);
 
-        // Título (sin emoji — jsPDF no soporta emojis)
         setFont('bold', 9); colorText(C_PRIMARY);
         doc.text(rec.titulo, MARGIN + 6, y + 12);
 
-        // Descripción multilínea
         setFont('normal', 8); colorText(C_MUTED);
         doc.text(descLines, MARGIN + 6, y + 19);
 
@@ -1348,7 +1425,7 @@
       y += 4;
       drawLine(y); y += 8;
 
-      // ── DISCLAIMER ─────────────────────────────────────────────────
+      // ── Disclaimer ─────────────────────────────────────────────
       checkPage(18);
       colorFill([244, 248, 251]);
       colorDraw(C_ACCENT);
@@ -1360,29 +1437,27 @@
       doc.text('Aviso importante:', MARGIN + 6, y + 5);
       setFont('normal', 7.5); colorText(C_MUTED);
       const disclaimer = doc.splitTextToSize(
-        'Este reporte es generado por un modelo de Machine Learning con fines académicos y no reemplaza el diagnóstico de un médico especialista. Los resultados deben ser interpretados por un profesional de la salud calificado.',
+        'Este reporte es generado por un modelo de Machine Learning con fines academicos y no reemplaza el diagnostico de un medico especialista. Los resultados deben ser interpretados por un profesional de la salud calificado.',
         CONTENT - 8
       );
       doc.text(disclaimer, MARGIN + 6, y + 11);
       y += 20;
 
-      // ── PIE DE PÁGINA ──────────────────────────────────────────────
+      // ── Pie de página ──────────────────────────────────────────
       const pageCount = doc.internal.getNumberOfPages();
       for (let p = 1; p <= pageCount; p++) {
         doc.setPage(p);
         colorFill(C_PRIMARY);
         doc.rect(0, 287, W, 10, 'F');
         setFont('normal', 7); colorText([180, 210, 230]);
-        doc.text('PulmoCheck  ·  Random Forest · Scikit-learn · Flask  ·  Ing. de Sistemas — 6.° Ciclo', MARGIN, 293);
-        doc.text(`Pág. ${p} / ${pageCount}`, W - MARGIN, 293, { align: 'right' });
+        doc.text('PulmoCheck  ·  Random Forest · Scikit-learn · Flask  ·  Ing. de Sistemas — 6. Ciclo', MARGIN, 293);
+        doc.text(`Pag. ${p} / ${pageCount}`, W - MARGIN, 293, { align: 'right' });
       }
 
-      // ── GUARDAR ────────────────────────────────────────────────────
-      const fechaFile = now.toISOString().slice(0, 10);
-      doc.save(`PulmoCheck_Reporte_${fechaFile}.pdf`);
+      return doc;
     }
 
-    /* ── CONTADOR ANIMADO ────────────────────────────────────────────── */
+    /* ── CONTADOR ANIMADO ────────────────────────────────────────── */
     function animateCounter(el, from, to, duration, suffix) {
       const start = performance.now();
       function step(now) {
@@ -1394,7 +1469,7 @@
       requestAnimationFrame(step);
     }
 
-    /* ── HELPERS ─────────────────────────────────────────────────────── */
+    /* ── HELPERS ─────────────────────────────────────────────────── */
     function setLoading(on) {
       submitBtn.disabled    = on;
       btnText.style.display = on ? 'none'  : 'inline';
