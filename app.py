@@ -15,26 +15,17 @@ Endpoints:
 import pickle
 import os
 import base64
+import smtplib
 import numpy as np
-from flask import Flask, request, jsonify, render_template
+from email.mime.multipart import MIMEMultipart
+from email.mime.text      import MIMEText
+from email.mime.application import MIMEApplication
+from flask      import Flask, request, jsonify, render_template
 from flask_cors import CORS
-from flask_mail import Mail, Message
 
 # ── Inicialización ────────────────────────────────────────────────────────────
 app = Flask(__name__)
 CORS(app)
-
-# ── Configuración de correo (Gmail) ───────────────────────────────────────────
-# Las credenciales se leen desde variables de entorno de Render.
-# No pongas tu contraseña directamente aquí.
-app.config['MAIL_SERVER']         = 'smtp.gmail.com'
-app.config['MAIL_PORT']           = 587
-app.config['MAIL_USE_TLS']        = True
-app.config['MAIL_USERNAME']       = os.environ.get('MAIL_USERNAME')
-app.config['MAIL_PASSWORD']       = os.environ.get('MAIL_PASSWORD')
-app.config['MAIL_DEFAULT_SENDER'] = os.environ.get('MAIL_USERNAME')
-
-mail = Mail(app)
 
 # ── Carga del modelo entrenado ────────────────────────────────────────────────
 MODEL_PATH = os.path.join(os.path.dirname(__file__), 'model.pkl')
@@ -57,13 +48,11 @@ except FileNotFoundError:
 
 @app.route('/', methods=['GET'])
 def index():
-    """Sirve el formulario HTML principal."""
     return render_template('index.html')
 
 
 @app.route('/health', methods=['GET'])
 def health():
-    """Endpoint de comprobación del estado de la API."""
     return jsonify({
         'status':         'ok',
         'modelo_cargado': MODEL is not None,
@@ -73,31 +62,8 @@ def health():
 
 @app.route('/predict', methods=['POST'])
 def predict():
-    """
-    Recibe los datos del formulario y retorna la predicción.
-
-    Body esperado (JSON):
-    {
-        "AGE": 45,
-        "GENDER": 1,
-        "SMOKING": 0,
-        ...
-        "OXYGEN_SATURATION": 94.3
-    }
-
-    Respuesta (JSON):
-    {
-        "prediccion": 1,
-        "etiqueta": "Sí",
-        "probabilidad_no": 0.18,
-        "probabilidad_si": 0.82,
-        "riesgo": "Alto"
-    }
-    """
     if MODEL is None:
-        return jsonify({
-            'error': 'Modelo no disponible. Ejecuta train_model.py primero.'
-        }), 503
+        return jsonify({'error': 'Modelo no disponible.'}), 503
 
     data = request.get_json(silent=True)
     if data is None:
@@ -139,20 +105,18 @@ def predict():
 @app.route('/send-report', methods=['POST'])
 def send_report():
     """
-    Recibe el reporte PDF en base64 y lo envía al correo del paciente.
+    Recibe el PDF en base64 y lo envía al correo del paciente
+    usando smtplib con Gmail (sin dependencias externas).
 
-    Body esperado (JSON):
-    {
-        "email":        "paciente@ejemplo.com",
-        "patient_name": "Juan García",
-        "pdf_base64":   "<string base64 del PDF>"
-    }
+    Variables de entorno requeridas en Render:
+      MAIL_USERNAME → correo Gmail remitente
+      MAIL_PASSWORD → App Password de Google (16 caracteres)
     """
-    # Verificar que las credenciales de correo estén configuradas
-    if not os.environ.get('MAIL_USERNAME') or not os.environ.get('MAIL_PASSWORD'):
-        return jsonify({
-            'error': 'Servicio de correo no configurado en el servidor.'
-        }), 503
+    mail_user = os.environ.get('MAIL_USERNAME', '').strip()
+    mail_pass = os.environ.get('MAIL_PASSWORD', '').strip()
+
+    if not mail_user or not mail_pass:
+        return jsonify({'error': 'Servicio de correo no configurado en el servidor.'}), 503
 
     data         = request.get_json(silent=True)
     to_email     = (data.get('email')        or '').strip()
@@ -162,35 +126,52 @@ def send_report():
     if not to_email or not pdf_b64:
         return jsonify({'error': 'Faltan datos: email o pdf_base64.'}), 400
 
-    # Decodificar el PDF de base64 a bytes
     try:
         pdf_bytes = base64.b64decode(pdf_b64)
     except Exception:
         return jsonify({'error': 'El PDF recibido no es válido.'}), 400
 
-    # Nombre del archivo adjunto
     nombre_archivo = f"PulmoCheck_Reporte_{patient_name.replace(' ', '_')}.pdf"
 
     try:
-        msg = Message(
-            subject=f'PulmoCheck — Reporte de Análisis Pulmonar',
-            recipients=[to_email]
-        )
-        msg.body = (
+        # Construir el correo
+        msg = MIMEMultipart()
+        msg['From']    = mail_user
+        msg['To']      = to_email
+        msg['Subject'] = 'PulmoCheck — Reporte de Analisis Pulmonar'
+
+        cuerpo = (
             f'Estimado/a {patient_name},\n\n'
-            'Adjunto encontrará su reporte de análisis pulmonar generado por PulmoCheck.\n\n'
+            'Adjunto encontrara su reporte de analisis pulmonar generado por PulmoCheck.\n\n'
             'Este reporte ha sido generado mediante un modelo de Machine Learning '
-            '(Random Forest) y tiene carácter informativo. No reemplaza el diagnóstico '
-            'de un médico especialista.\n\n'
-            'Se recomienda compartir este reporte con su médico de cabecera.\n\n'
-            '— PulmoCheck · Ing. de Sistemas — 6.° Ciclo'
+            '(Random Forest) y tiene caracter informativo. No reemplaza el diagnostico '
+            'de un medico especialista.\n\n'
+            'Se recomienda compartir este reporte con su medico de cabecera.\n\n'
+            '— PulmoCheck · Ing. de Sistemas — 6. Ciclo'
         )
-        msg.attach(nombre_archivo, 'application/pdf', pdf_bytes)
-        mail.send(msg)
+        msg.attach(MIMEText(cuerpo, 'plain'))
+
+        # Adjuntar el PDF
+        adjunto = MIMEApplication(pdf_bytes, _subtype='pdf')
+        adjunto.add_header('Content-Disposition', 'attachment', filename=nombre_archivo)
+        msg.attach(adjunto)
+
+        # Enviar via Gmail SMTP
+        with smtplib.SMTP('smtp.gmail.com', 587) as smtp:
+            smtp.ehlo()
+            smtp.starttls()
+            smtp.ehlo()
+            smtp.login(mail_user, mail_pass)
+            smtp.send_message(msg)
+
         return jsonify({'success': True, 'message': f'Reporte enviado a {to_email}'})
 
+    except smtplib.SMTPAuthenticationError:
+        return jsonify({'error': 'Credenciales de correo incorrectas. Verifica MAIL_USERNAME y MAIL_PASSWORD en Render.'}), 500
+    except smtplib.SMTPException as e:
+        return jsonify({'error': f'Error SMTP: {str(e)}'}), 500
     except Exception as e:
-        return jsonify({'error': f'Error al enviar el correo: {str(e)}'}), 500
+        return jsonify({'error': f'Error inesperado: {str(e)}'}), 500
 
 
 if __name__ == '__main__':

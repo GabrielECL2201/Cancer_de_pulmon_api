@@ -1184,16 +1184,20 @@
           })
         });
 
-        const data = await res.json();
+        // Parsear respuesta de forma segura (puede llegar vacía si hay error de servidor)
+        let data = {};
+        try { data = await res.json(); } catch { /* respuesta no es JSON válido */ }
+
         if (res.ok && data.success) {
           status.textContent = `✅ Reporte enviado correctamente a ${email}`;
           status.className   = 'email-status status-success';
         } else {
-          status.textContent = '⚠ Error al enviar: ' + (data.error || 'intenta de nuevo.');
+          const msg = data.error || `Error del servidor (${res.status}). Verifica las variables MAIL_USERNAME y MAIL_PASSWORD en Render.`;
+          status.textContent = '⚠ ' + msg;
           status.className   = 'email-status status-error';
         }
       } catch (err) {
-        status.textContent = '⚠ No se pudo conectar con el servidor. (' + err.message + ')';
+        status.textContent = '⚠ No se pudo enviar el reporte. (' + err.message + ')';
         status.className   = 'email-status status-error';
       } finally {
         btn.disabled            = false;
