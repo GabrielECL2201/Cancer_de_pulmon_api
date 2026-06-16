@@ -342,83 +342,29 @@
       border: 1.5px solid #a8dfc5;
     }
 
-    /* ── Sección de envío por correo ─────────────────────────────────── */
-    .email-section {
-      background: #f0f7ff;
-      border: 1.5px solid #b8d4e8;
-      border-radius: 10px;
-      padding: 1.25rem 1.5rem;
-      margin-top: 1.25rem;
-    }
-
-    .email-header {
+    /* ── Botón descarga PDF ───────────────────────────────────────────── */
+    .btn-pdf {
       display: flex;
       align-items: center;
-      gap: .75rem;
-      margin-bottom: 1rem;
-    }
-
-    .email-header-icon {
-      font-size: 1.5rem;
-      flex-shrink: 0;
-    }
-
-    .email-title { font-size: .95rem; font-weight: 600; color: var(--primary); }
-    .email-sub   { font-size: .78rem; color: var(--muted); margin-top: .15rem; }
-
-    .email-row {
-      display: flex;
-      gap: .75rem;
-    }
-
-    .email-input {
-      flex: 1;
-      border: 1.5px solid var(--border);
-      border-radius: 8px;
-      padding: .6rem .9rem;
-      font-family: 'DM Sans', sans-serif;
-      font-size: .95rem;
-      color: var(--text);
-      background: #fff;
-      transition: border-color .2s, box-shadow .2s;
-    }
-
-    .email-input:focus {
-      outline: none;
-      border-color: var(--accent);
-      box-shadow: 0 0 0 3px rgba(46,134,171,.13);
-    }
-
-    .btn-send-email {
-      display: flex;
-      align-items: center;
-      gap: .5rem;
-      padding: .6rem 1.4rem;
+      justify-content: center;
+      gap: .55rem;
+      width: 100%;
+      padding: .85rem;
       background: var(--accent);
       color: #fff;
       font-family: 'DM Sans', sans-serif;
-      font-size: .9rem;
+      font-size: .95rem;
       font-weight: 600;
+      letter-spacing: .02em;
       border: none;
-      border-radius: 8px;
+      border-radius: 10px;
       cursor: pointer;
-      transition: background .2s;
-      white-space: nowrap;
+      transition: background .2s, transform .1s;
     }
 
-    .btn-send-email:hover    { background: #256e8a; }
-    .btn-send-email:disabled { background: var(--muted); cursor: not-allowed; }
-
-    .email-status {
-      margin-top: .75rem;
-      font-size: .85rem;
-      border-radius: 6px;
-      padding: .5rem .8rem;
-      display: none;
-    }
-
-    .status-success { background: #f0fff7; color: var(--success); border: 1px solid #a8dfc5; display: block; }
-    .status-error   { background: #fff0f0; color: var(--danger);  border: 1px solid #f5c6c6; display: block; }
+    .btn-pdf:hover    { background: #256e8a; }
+    .btn-pdf:active   { transform: scale(.98); }
+    .btn-pdf:disabled { background: var(--muted); cursor: not-allowed; }
 
     /* ── Disclaimer ──────────────────────────────────────────────────── */
     .disclaimer {
@@ -466,7 +412,6 @@
     @media (max-width: 600px) {
       .form-grid  { grid-template-columns: 1fr; }
       .recom-grid { grid-template-columns: 1fr; }
-      .email-row  { flex-direction: column; }
       .card { padding: 1.5rem 1.25rem; }
       header { padding: 1.5rem; }
     }
@@ -784,28 +729,6 @@
         📄 Descargar Reporte PDF
       </button>
 
-      <!-- ── Envío por correo ───────────────────────────────────────── -->
-      <div class="email-section">
-        <div class="email-header">
-          <span class="email-header-icon">📧</span>
-          <div>
-            <div class="email-title">Enviar reporte al correo del paciente</div>
-            <div class="email-sub">
-              Se enviará el reporte con resultados y recomendaciones personalizadas
-            </div>
-          </div>
-        </div>
-        <div class="email-row">
-          <input type="email" id="patient-email" class="email-input"
-                 placeholder="correo@ejemplo.com" />
-          <button class="btn-send-email" id="btn-send-email" onclick="enviarReporte()">
-            <span id="btn-send-text">Enviar reporte</span>
-            <div class="spinner" id="spinner-email"></div>
-          </button>
-        </div>
-        <div class="email-status" id="email-status"></div>
-      </div>
-
       <!-- Disclaimer -->
       <div class="disclaimer">
         ⚠️ <strong>Aviso:</strong> Este resultado y las recomendaciones son generados
@@ -883,7 +806,7 @@
     const errBanner = document.getElementById('error-banner');
     const resultSec = document.getElementById('result-section');
 
-    // Variables globales para el PDF y correo
+    // Variables globales para el PDF
     let _lastData     = null;
     let _lastPayload  = null;
     let _lastRecomend = [];
@@ -1033,11 +956,6 @@
       _lastRecomend = generarRecomendaciones(payload, data);
       renderRecomendaciones(_lastRecomend);
 
-      // Limpiar estado de correo anterior
-      document.getElementById('patient-email').value = '';
-      document.getElementById('email-status').className = 'email-status';
-      document.getElementById('email-status').textContent = '';
-
       resultSec.style.display = 'block';
       resultSec.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
@@ -1143,79 +1061,21 @@
       });
     }
 
-    /* ── ENVIAR REPORTE POR CORREO ───────────────────────────────── */
-    async function enviarReporte() {
-      const emailInput = document.getElementById('patient-email');
-      const email      = emailInput.value.trim();
-      const status     = document.getElementById('email-status');
-      const btn        = document.getElementById('btn-send-email');
-      const btnSText   = document.getElementById('btn-send-text');
-      const spinEmail  = document.getElementById('spinner-email');
-
-      // Validar correo
-      if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-        status.textContent = '⚠ Por favor ingresa un correo electrónico válido.';
-        status.className   = 'email-status status-error';
-        return;
-      }
-
+    /* ── DESCARGAR REPORTE EN PDF ──────────────────────────────────── */
+    function descargarPDF() {
       if (!_lastData || !_lastPayload) return;
 
-      // Generar PDF en base64
-      let pdfBase64;
+      const btn = document.getElementById('btn-pdf');
       try {
-        pdfBase64 = generarPDFBase64();
+        if (btn) btn.disabled = true;
+        const doc = _buildPDF();
+        const safeName = (_patientName || 'paciente').trim().replace(/\s+/g, '_');
+        doc.save(`PulmoCheck_Reporte_${safeName}.pdf`);
       } catch (err) {
-        status.textContent = '⚠ Error al generar el reporte PDF: ' + err.message;
-        status.className   = 'email-status status-error';
-        return;
-      }
-
-      // Deshabilitar botón y mostrar spinner
-      btn.disabled       = true;
-      btnSText.style.display = 'none';
-      spinEmail.style.display = 'block';
-      status.className   = 'email-status';
-      status.textContent = '';
-
-      try {
-        const res = await fetch('/send-report', {
-          method:  'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            email:        email,
-            patient_name: _patientName,
-            pdf_base64:   pdfBase64
-          })
-        });
-
-        // Parsear respuesta de forma segura (puede llegar vacía si hay error de servidor)
-        let data = {};
-        try { data = await res.json(); } catch { /* respuesta no es JSON válido */ }
-
-        if (res.ok && data.success) {
-          status.textContent = `✅ Reporte enviado correctamente a ${email}`;
-          status.className   = 'email-status status-success';
-        } else {
-          const msg = data.error || `Error del servidor (${res.status}). Verifica las variables MAIL_USERNAME y MAIL_PASSWORD en Render.`;
-          status.textContent = '⚠ ' + msg;
-          status.className   = 'email-status status-error';
-        }
-      } catch (err) {
-        status.textContent = '⚠ No se pudo enviar el reporte. (' + err.message + ')';
-        status.className   = 'email-status status-error';
+        showError('No se pudo generar el reporte PDF: ' + err.message);
       } finally {
-        btn.disabled            = false;
-        btnSText.style.display  = 'inline';
-        spinEmail.style.display = 'none';
+        if (btn) btn.disabled = false;
       }
-    }
-
-    /* ── GENERADOR PDF (retorna base64) ──────────────────────────── */
-    function generarPDFBase64() {
-      const doc = _buildPDF();
-      // Retorna solo el string base64 (sin el prefijo data:...)
-      return doc.output('datauristring').split(',')[1];
     }
 
     function _buildPDF() {
